@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import math
+import plotly.graph_objects as go
 import plotly.express as px
 
 # The actual page content is executed here by Streamlit
@@ -27,6 +28,8 @@ else:
     df['pageviews_per_capita'] = df['total_pageviews']/df['population']
     df['pageviews_per_capita_log'] = [math.log10(item) for item in df['pageviews_per_capita']]
     
+    df_means = pd.DataFrame(df.groupby('region')['pageviews_per_capita'].mean())
+
     # --- Analysis Content ---
     st.header("2. Pageviews per Capita by Region")
 
@@ -37,7 +40,9 @@ else:
     )
 
     df_plot = df[df['region'].isin(selected_region)].dropna(subset=['pageviews_per_capita_log', 'region'])
+    df_means_plot = (df[df['region'].isin(selected_region)].groupby('region')['pageviews_per_capita_log'].mean().reset_index())
 
+    # Create initial figure
     fig = px.strip(
         df_plot,
         x="pageviews_per_capita_log",
@@ -47,9 +52,17 @@ else:
         "region": "Region"},
         color='region',
         hover_data=['country_year'],
-        title=f'Fare vs. Age Colored by Survival (Sexes: {", ".join(selected_region)})',
+        title=f'Pageviews per Capita (Regions: {", ".join(selected_region)})',
     )
 
     fig.update_traces(jitter=1)
+
+    # Add the second strip plot trace (e.g., "Group 2")
+    fig.add_trace(go.Scatter(
+        x=df_means_plot['pageviews_per_capita_log'],
+        y=df_means_plot['region'],
+        mode='markers',
+        name='Means',
+        marker=dict(color='orange', size=14, opacity=1, symbol='triangle-up')))
 
     st.plotly_chart(fig, use_container_width=True)
