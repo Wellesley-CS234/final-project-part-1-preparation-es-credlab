@@ -15,6 +15,13 @@ if 'student_data' not in st.session_state or st.session_state['student_data']['s
 else:
     df = st.session_state['student_data']['st11_df']
 
+    # Prep data
+    country_years_2017_2022 = [country_year for country_year in df['country_year'] if country_year.split()[1] in ['2017','2018','2019','2020','2021','2022']]
+    country_years_2023_2025 = [country_year for country_year in df['country_year'] if country_year.split()[1] in ['2023','2024','2025']]
+
+    years_2017_2022 = df[df['country_year'].isin(country_years_2017_2022)]
+    years_2023_2025 = df[df['country_year'].isin(country_years_2023_2025)]
+
     # --- Student Introductory Section ---
     st.header("1. Introduction and Project Goal")
     st.markdown("""
@@ -24,23 +31,23 @@ else:
     """)
     st.markdown("---")
     
-    # prepare dataframe
-    df['pageviews_per_capita'] = df['total_pageviews']/df['population']
-    df['pageviews_per_capita_log'] = [math.log10(item) for item in df['pageviews_per_capita']]
+    # Prepare dataframes
+    years_2017_2022['pageviews_per_capita'] = years_2017_2022['total_pageviews']/years_2017_2022['population']
+    years_2017_2022['pageviews_per_capita_log'] = [math.log10(item) for item in years_2017_2022['pageviews_per_capita']]
     
-    df_means = pd.DataFrame(df.groupby('region')['pageviews_per_capita'].mean())
+    df_means = pd.DataFrame(years_2017_2022.groupby('region')['pageviews_per_capita'].mean())
 
     # --- Analysis Content ---
     st.header("2. Pageviews per Capita by Region")
 
     selected_region = st.multiselect(
         "Filter by Region:",
-        df['region'].unique().tolist(),
-        default=df['region'].unique().tolist()
+        years_2017_2022['region'].unique().tolist(),
+        default=years_2017_2022['region'].unique().tolist()
     )
 
-    df_plot = df[df['region'].isin(selected_region)].dropna(subset=['pageviews_per_capita_log', 'region'])
-    df_means_plot = (df[df['region'].isin(selected_region)].groupby('region')['pageviews_per_capita_log'].mean().reset_index())
+    df_plot = years_2017_2022[years_2017_2022['region'].isin(selected_region)].dropna(subset=['pageviews_per_capita_log', 'region'])
+    df_means_plot = (years_2017_2022[years_2017_2022['region'].isin(selected_region)].groupby('region')['pageviews_per_capita_log'].mean().reset_index())
 
     # Create initial figure
     fig = px.strip(
